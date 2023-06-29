@@ -1,2 +1,2 @@
-# adapatation-sorscher
-Adaptation of Sorscher path integrating RNN emergent grid cell SSCP23 project
+# minimal-sorscher
+A minimal implementation of the Sorscher path integrating RNN emergent grid cell project.

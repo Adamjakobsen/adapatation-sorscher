@@ -1,0 +1,16 @@
+name: minimal-sorscher
+channels:
+  - conda-forge
+  - pytorch
+  - defaults
+dependencies:
+  - python=3
+  - numpy
+  - scipy
+  - matplotlib
+  - tqdm
+  - jupyterlab
+  - pytorch
+  - pip
+  - pip:
+    - rat-simulator
