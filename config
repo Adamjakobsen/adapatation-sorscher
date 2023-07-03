@@ -1,0 +1,8 @@
+[training]
+num_train_steps = 10
+batch_size = 200
+
+[data]
+seq_len = 20
+boxsize = (2.2, 2.2)
+soft_boundary = 0.03
