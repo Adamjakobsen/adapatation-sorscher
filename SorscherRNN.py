@@ -63,7 +63,7 @@ class SorscherRNN(torch.nn.Module):
 
         # define network architecture
         self.init_position_encoder = torch.nn.Linear(Np, Ng, bias=False)
-        self.RNN = torch.nn.RNN(
+        self.RNN = AdaptationRNN(
             input_size=2,
             hidden_size=Ng,
             num_layers=1,
