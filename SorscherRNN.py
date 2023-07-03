@@ -1,6 +1,54 @@
 import torch
 import numpy as np
 
+import torch
+from torch import Tensor
+from torch.nn.modules.module import Module
+from torch.nn.parameter import Parameter
+from torch.nn.utils.rnn import PackedSequence
+from torch.nn import init
+from torch import _VF
+
+
+class AdaptationRNN(torch.nn.RNN):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def forward(self, input, hx=None):
+        batch_sizes = None
+        unsorted_indices = None
+
+        self.check_forward_args(input, hx, batch_sizes)
+
+        W, Wh = self._flat_weights
+
+        testing = True
+        if testing:
+            result = [] # 200
+            hidden = [] # 200
+            for batch, p0 in zip(input, hx[0]):
+                ht = p0
+                batch_result = [] # 20
+                for x in batch:
+                    z = W@x
+                    z += Wh@ht
+                    s_z = torch.relu(z)
+
+                    batch_result.append(s_z.tolist())
+                    ht = z # This may be wrong :)
+
+                hidden.append(ht.tolist())
+                result.append(batch_result)
+        else:
+            result = _VF.rnn_relu(input, hx, self._flat_weights, self.bias, self.num_layers,
+                self.dropout, self.training, self.bidirectional,
+                self.batch_first)
+
+        output = torch.Tensor(result)
+        hidden = torch.Tensor([hidden]) # Should be torch.Size([1, 200, 4096])
+
+        return output, self.permute_hidden(hidden, unsorted_indices)
+
 class SorscherRNN(torch.nn.Module):
     """
     Model based on:
