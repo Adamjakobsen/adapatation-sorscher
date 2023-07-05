@@ -34,7 +34,7 @@ class AdaptationRNN(torch.nn.RNN):
                     s_z = torch.relu(z)
 
                     batch_result.append(s_z.tolist())
-                    ht = z # This may be wrong :)
+                    ht = s_z # This may be wrong :)
 
                 hidden.append(ht.tolist())
                 result.append(batch_result)
