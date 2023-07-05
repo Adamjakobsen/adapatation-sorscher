@@ -13,8 +13,6 @@ from torch import _VF
 class AdaptationRNN(torch.nn.RNN):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.device= torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        print(self.device)
 
     def forward(self, input, hx=None):
         batch_sizes = None
@@ -26,33 +24,29 @@ class AdaptationRNN(torch.nn.RNN):
 
         testing = True
         if testing:
-            hidden = torch.Tensor([]).to(self.device)
+            batch_size = input.size(0)
 
-            for batch, p0 in zip(input, hx[0]):
-                ht = p0
-                
-                z = torch.matmul(W, batch.T).T
-                
-                ht = ht[None]
-                ht_repeated = ht.repeat(batch.shape[0], 1)#Repeat the initial hidden state for each time step
-                z += (Wh @ ht_repeated.T).T
+            hidden = hx[0].clone() # clone hx[0] to prevent modifying it in place
+            result = []
 
+            for i in range(input.size(1)):  # iterate over sequence
+                z = torch.matmul(W, input[:, i].t()).t()  # apply W to all batches at once
+                z += torch.matmul(Wh, hidden.t()).t()  # apply Wh to all hidden states at once
                 s_z = torch.relu(z)
+                result.append(s_z.unsqueeze(1))  # add sequence dimension
+                hidden = s_z
 
-                hidden = torch.cat((hidden, s_z[-1][None]), dim=0)
-                
-            output = s_z[None] # This will be the output of the last batch
-            hidden = hidden[None] # Should be torch.Size([1, 200, 4096])
+            output = torch.cat(result, dim=1)  # concatenate over sequence dimension
+            hidden = hidden.unsqueeze(0)  # add num_layers * num_directions dimension
 
         else:
             result = _VF.rnn_relu(input, hx, self._flat_weights, self.bias, self.num_layers,
-                                self.dropout, self.training, self.bidirectional,
-                                self.batch_first)
+                                  self.dropout, self.training, self.bidirectional,
+                                  self.batch_first)
             output = result[0]
             hidden = result[1]
 
         return output, self.permute_hidden(hidden, unsorted_indices)
-
 class SorscherRNN(torch.nn.Module):
     """
     Model based on:
