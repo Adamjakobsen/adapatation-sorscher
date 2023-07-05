@@ -6,3 +6,8 @@ batch_size = 200
 seq_len = 20
 boxsize = (2.2, 2.2)
 soft_boundary = 0.03
+
+[EXPERIMENT]
+vanilla = True 
+energy_loss = False 
+adaptation = False
