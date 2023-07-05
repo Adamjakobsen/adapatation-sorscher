@@ -24,20 +24,25 @@ class AdaptationRNN(torch.nn.RNN):
 
         testing = True
         if testing:
-            batch_size = input.size(0)
-
-            hidden = hx[0].clone() # clone hx[0] to prevent modifying it in place
+            hidden = hx[0]
             result = []
 
-            for i in range(input.size(1)):  # iterate over sequence
-                z = torch.matmul(W, input[:, i].t()).t()  # apply W to all batches at once
-                z += torch.matmul(Wh, hidden.t()).t()  # apply Wh to all hidden states at once
+            time_steps = input.size(1)
+
+            for i in range(time_steps):
+                # apply W and Wh to all batches at once
+                z = torch.matmul(W, input[:, i].t()).t()
+                z += torch.matmul(Wh, hidden.t()).t()
                 s_z = torch.relu(z)
-                result.append(s_z.unsqueeze(1))  # add sequence dimension
+
+                # s_z is now [200, 4096], unsqueeze(1) gives us [200, 1, 4096]
+                # so that we can concatenate the timesteps later
+                result.append(s_z.unsqueeze(1))
                 hidden = s_z
 
-            output = torch.cat(result, dim=1)  # concatenate over sequence dimension
-            hidden = hidden.unsqueeze(0)  # add num_layers * num_directions dimension
+            # Concatenating the timesteps
+            output = torch.cat(result, dim=1)
+            hidden = hidden.unsqueeze(0) 
 
         else:
             result = _VF.rnn_relu(input, hx, self._flat_weights, self.bias, self.num_layers,
