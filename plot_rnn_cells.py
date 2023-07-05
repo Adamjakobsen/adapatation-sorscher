@@ -1,14 +1,9 @@
 import torch
 import matplotlib.pyplot as plt
-import ratsimulator
-from PlaceCells import PlaceCells
-from dataloader import Dataset
-from SorscherRNN import SorscherRNN
-from tqdm import tqdm
 import numpy as np
 from utils import multiimshow
 import scipy
-from main import get_dataloader
+from dataloader import get_dataloader
 
 if __name__ == "__main__":
     from localconfig import config

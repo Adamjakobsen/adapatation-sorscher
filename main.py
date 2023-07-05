@@ -1,35 +1,9 @@
 import torch
 import matplotlib.pyplot as plt
-import ratsimulator
-from PlaceCells import PlaceCells
-from dataloader import Dataset
-from SorscherRNN import SorscherRNN
+from SorscherRNN_cuda import SorscherRNN
 from tqdm import tqdm
-import numpy as np
-from utils import multiimshow
-import scipy
 
-def get_dataloader(config):
-    environment = ratsimulator.Environment.Rectangle(
-        boxsize=eval(config.data.boxsize),
-        soft_boundary=config.data.soft_boundary
-    )
-    agent = ratsimulator.Agent(environment)
-    place_cells = PlaceCells(environment)
-
-    # set num_samples essentially infinite, since data is generated on the fly anyway
-    dataset = Dataset(
-        agent, place_cells,
-        num_samples=1000000000,
-        seq_len=config.data.seq_len
-    )
-    dataloader = torch.utils.data.DataLoader(
-        dataset,
-        batch_size=config.training.batch_size,
-        num_workers=8 # choose num_workers based on your system
-    )
-
-    return dataloader, dataset
+from dataloader import get_dataloader
 
 if __name__ == "__main__":
     from localconfig import config
