@@ -15,8 +15,8 @@ if __name__ == "__main__":
 
     model = SorscherRNN() # default parameters are fine
     # move model to GPU if available
-    if torch.cuda.is_available():
-        model = model.to('cuda')
+    #if torch.cuda.is_available():
+    #    model = model.to('cuda')
 
     dataloader, _ = get_dataloader(config)
 

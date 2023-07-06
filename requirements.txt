@@ -5,4 +5,4 @@ jupyterlab
 tqdm
 torch
 localconfig
-ratsimulator
+rat-simulator

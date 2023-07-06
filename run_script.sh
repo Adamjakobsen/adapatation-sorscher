@@ -26,4 +26,4 @@ module load tensorflow2-extra-py37-cuda11.2-gcc8/2.5.2
 
 
 
-srun python3 /home/mkkvalsu/projects/adaptation-sorcher/main.py 
+srun python3 /home/mkkvalsu/projects/adapatation-sorscher/main.py 
