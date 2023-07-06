@@ -1,4 +1,11 @@
 __pycache__
 .DS_Store
 
-model
+# Models are too large to push to GitHub
+model 
+
+# The experiment folder should not be pushed because 
+# it contains files that are too large to push to GitHub
+experiments
+experiments/*
+
