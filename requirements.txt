@@ -1,0 +1,8 @@
+numpy
+scipy
+matplotlib
+jupyterlab
+tqdm
+torch
+localconfig
+ratsimulator
