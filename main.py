@@ -23,6 +23,7 @@ if __name__ == "__main__":
     loss_history = [] # we'll use this to plot the loss over time
 
     num_train_steps = config.training.num_train_steps
+    print("About to start")
     progress_bar = tqdm(enumerate(dataloader), total=num_train_steps)
     for i, (v, p0, labels, _) in progress_bar:
         loss = model.train_step(v, p0, labels)
