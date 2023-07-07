@@ -11,6 +11,4 @@ boxsize = (2.2, 2.2)
 soft_boundary = 0.03
 
 [EXPERIMENT]
-vanilla = True 
-energy_loss = False 
-adaptation = False
+adaptation = True

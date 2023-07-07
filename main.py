@@ -13,7 +13,7 @@ if __name__ == "__main__":
     logger = Logger()
     logger.save_config(config)
 
-    model = SorscherRNN() # default parameters are fine
+    model = SorscherRNN(adaptation=config.experiment.adaptation) # default parameters are fine
     # move model to GPU if available
     #if torch.cuda.is_available():
     #    model = model.to('cuda')
@@ -23,6 +23,7 @@ if __name__ == "__main__":
     loss_history = [] # we'll use this to plot the loss over time
 
     num_train_steps = config.training.num_train_steps
+
     print("About to start")
     if config.training.on_cluster:
         progress_bar = enumerate(dataloader)
