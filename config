@@ -11,4 +11,6 @@ boxsize = (2.2, 2.2)
 soft_boundary = 0.03
 
 [EXPERIMENT]
-adaptation = True
+alpha = 0.0
+beta = 0.0
+weight_decay = 0.0

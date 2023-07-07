@@ -11,11 +11,10 @@ from torch import _VF
 
 
 class AdaptationRNN(torch.nn.RNN):
-    def __init__(self, adaptation=True, *args, **kwargs):
+    def __init__(self, alpha=0.0, beta=0.0, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.beta = 1.0
-        self.alpha = 1.0
-        self.adaptation = adaptation
+        self.beta = alpha
+        self.alpha = beta
 
     def forward(self, input, hx=None):
         batch_sizes = None
@@ -25,77 +24,58 @@ class AdaptationRNN(torch.nn.RNN):
 
         W, Wh = self._flat_weights
 
-
         hidden = hx[0]
         result = []
 
         time_steps = input.size(1)
 
-        if self.adaptation:
-            # Defining v 
-            v = torch.zeros_like(hidden)
-            z_prev = torch.zeros_like(hidden) # This is just temp :)
+        # Defining v 
+        v = torch.zeros_like(hidden)
+        z_prev = torch.zeros_like(hidden) # This is just temp :)
 
-            for i in range(time_steps):
-                # apply W and Wh to all batches at once
-                z = torch.matmul(W, input[:, i].T).T
-                z += torch.matmul(Wh, hidden.T).T
-                z -= self.beta * v
+        for i in range(time_steps):
+            # apply W and Wh to all batches at once
+            z = torch.matmul(W, input[:, i].T).T
+            z += torch.matmul(Wh, hidden.T).T
+            z -= self.beta * v
 
-                # Defining v
-                v = v + self.alpha * (z_prev - v)
+            # Defining v
+            v = v + self.alpha * (z_prev - v)
 
-                # Activation function
-                s_z = torch.relu(z)
+            # Activation function
+            s_z = torch.relu(z)
 
-                # s_z is now [200, 4096], unsqueeze(1) gives us [200, 1, 4096]
-                # so that we can concatenate the timesteps later
-                result.append(s_z.unsqueeze(1))
-                hidden = s_z
-                z_prev = z
+            # s_z is now [200, 4096], unsqueeze(1) gives us [200, 1, 4096]
+            # so that we can concatenate the timesteps later
+            result.append(s_z.unsqueeze(1))
+            hidden = s_z
+            z_prev = z
 
-            # Concatenating the timesteps
-            output = torch.cat(result, dim=1)
-            hidden = hidden.unsqueeze(0) 
-        else:
-            for i in range(time_steps):
-                # apply W and Wh to all batches at once
-                z = torch.matmul(W, input[:, i].T).T
-                z += torch.matmul(Wh, hidden.T).T
-                s_z = torch.relu(z)
-
-                # z = - beta * v_prev + Wh * s_z_prev + W * z_prev
-                # v = v_prev + alpha * (z_prev - v_prev)
-                # s_z = relu(z)
-
-                # s_z is now [200, 4096], unsqueeze(1) gives us [200, 1, 4096]
-                # so that we can concatenate the timesteps later
-                result.append(s_z.unsqueeze(1))
-                hidden = s_z
-
-            # Concatenating the timesteps
-            output = torch.cat(result, dim=1)
-            hidden = hidden.unsqueeze(0) 
+        # Concatenating the timesteps
+        output = torch.cat(result, dim=1)
+        hidden = hidden.unsqueeze(0) 
 
         return output, self.permute_hidden(hidden, unsorted_indices)
+
 class SorscherRNN(torch.nn.Module):
     """
     Model based on:
     https://github.com/ganguli-lab/grid-pattern-formation/blob/master/model.py
     """
 
-    def __init__(
-        self, adaptation=True, Ng=4096, Np=512, **kwargs
-    ):
+    def __init__(self, alpha=0.0, beta=0.0, weight_decay=0.0, Ng=4096, Np=512, **kwargs):
         super(SorscherRNN, self).__init__(**kwargs)
         self.Ng, self.Np = Ng, Np
         #Set torch seed
         torch.manual_seed(0)
 
+        self.weight_decay = weight_decay
+
         # define network architecture
         self.init_position_encoder = torch.nn.Linear(Np, Ng, bias=False)
         self.RNN = AdaptationRNN(
-            adaptation=adaptation,
+            alpha=alpha,
+            beta=beta,
             input_size=2,
             hidden_size=Ng,
             num_layers=1,
@@ -157,7 +137,7 @@ class SorscherRNN(torch.nn.Module):
         gs = self.g(v, p0)
         return self.p(gs, log_softmax)
 
-    def loss_fn(self, log_predictions, labels, weight_decay= 1e-4 ):
+    def loss_fn(self, log_predictions, labels):
         """
         Parameters:
             log_predictions, (mini-batch, seq_len, npcs): model predictions in log softmax
@@ -170,7 +150,7 @@ class SorscherRNN(torch.nn.Module):
             labels = labels.to(self.device, dtype=self.dtype)
         CE = torch.mean(-torch.sum(labels * log_predictions, axis=-1))
         l2_reg = torch.sum(self.RNN.weight_hh_l0**2)
-        return CE + weight_decay*l2_reg 
+        return CE + self.weight_decay*l2_reg 
 
     def train_step(self, v, p0, labels):
         self.optimizer.zero_grad()
