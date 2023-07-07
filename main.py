@@ -24,14 +24,20 @@ if __name__ == "__main__":
 
     num_train_steps = config.training.num_train_steps
     print("About to start")
-    progress_bar = tqdm(enumerate(dataloader), total=num_train_steps)
+    if config.training.on_cluster:
+        progress_bar = enumerate(dataloader)
+    else:
+        progress_bar = tqdm(enumerate(dataloader), total=num_train_steps)
     for i, (v, p0, labels, _) in progress_bar:
         loss = model.train_step(v, p0, labels)
         
         # Plotting and visualization
         if i % config.training.plot_interval == 0:
-            progress_bar.set_description(f"Step {i+1}")
-            progress_bar.set_postfix({"loss": f"{loss:.4f}"})
+            if not config.training.on_cluster:
+                progress_bar.set_description(f"Step {i+1}")
+                progress_bar.set_postfix({"loss": f"{loss:.4f}"})
+            else:
+                print("Epoch:", i, "Loss:", loss)
             loss_history.append(loss)
         if i % config.training.save_interval == 0:
             logger.save_model(model)

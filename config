@@ -3,6 +3,7 @@ num_train_steps = 10
 batch_size = 200
 plot_interval = 1
 save_interval = 50
+on_cluster = True
 
 [DATA]
 seq_len = 20
