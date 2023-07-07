@@ -8,8 +8,8 @@
 ##SBATCH --exclusive
 ##SBATCH --mem-per-cpu=128MB
 #SBATCH --time=2-00:00
-#SBATCH -o /home/$USER/slurm.adapt.%j.%N.out # STDOUT
-#SBATCH -e /home/$USER/slurm.adapt.%j.%N.err # STDERR
+#SBATCH -o /home/mkkvalsu/slurm.adapt.%j.%N.out # STDOUT
+#SBATCH -e /home/mkkvalsu/slurm.adapt.%j.%N.err # STDERR
 ##SBATCH --propagate=STACK
 
 
@@ -21,9 +21,9 @@ module load slurm/20.02.7
 module load tensorflow2-extra-py37-cuda11.2-gcc8/2.5.2
 # module load python3.7/numpy
 #. /home/mkkvalsu/myenv/bin/activate
-. /home/$USER/python_envs/grid_cells_env/bin/activate
+. /home/mkkvalsu/python_envs/grid_cells_env/bin/activate
 #export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 
 
-srun python3 /home/$USER/projects/adapatation-sorscher/main.py 
+srun python3 /home/mkkvalsu/projects/adapatation-sorscher/main.py 
