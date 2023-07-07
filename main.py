@@ -29,6 +29,7 @@ if __name__ == "__main__":
         progress_bar = enumerate(dataloader)
     else:
         progress_bar = tqdm(enumerate(dataloader), total=num_train_steps)
+    
     for i, (v, p0, labels, _) in progress_bar:
         loss = model.train_step(v, p0, labels)
         
