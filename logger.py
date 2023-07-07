@@ -5,8 +5,8 @@ import time
 class Logger:
     def __init__(self):
         path = self.get_path()
-        self.make_experiment_folder(path)
         self.path = path
+        self.make_experiment_folder(path)
 
     def save_config(self, config) -> None:
         config.save(self.path + "/config")
@@ -27,12 +27,16 @@ class Logger:
         if not os.path.isdir("./experiments"):
             os.mkdir("./experiments")
 
-        assert not os.path.isdir(path), f"It seems the experiment folder {path} exists already. \
-            Aborting to not overwrite data."
+        additive = 2
+        new_path = path
+        while os.path.isdir(new_path):
+            new_path = path + "_" + str(additive)
+            additive += 1
         
         # We are safe to make the folder
-        os.mkdir(path)
-        print("The folder", path, "has been made")
+        os.mkdir(new_path)
+        print("The folder", new_path, "has been made")
+        self.path = new_path
 
     def save_model(self, model) -> None:
         torch.save(model, self.path + "/model")

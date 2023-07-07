@@ -1,5 +1,5 @@
 [TRAINING]
-num_train_steps = 10
+num_train_steps = 20
 batch_size = 200
 plot_interval = 1
 save_interval = 50
