@@ -170,7 +170,7 @@ class SorscherRNN(torch.nn.Module):
             labels = labels.to(self.device, dtype=self.dtype)
         CE = torch.mean(-torch.sum(labels * log_predictions, axis=-1))
         l2_reg = torch.sum(self.RNN.weight_hh_l0**2)
-        return CE #+ weight_decay*l2_reg
+        return CE + weight_decay*l2_reg 
 
     def train_step(self, v, p0, labels):
         self.optimizer.zero_grad()
