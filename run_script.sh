@@ -8,8 +8,8 @@
 ##SBATCH --exclusive
 ##SBATCH --mem-per-cpu=128MB
 #SBATCH --time=2-00:00
-#SBATCH -o /home/$USER/slurm.column.%j.%N.out # STDOUT
-#SBATCH -e /home/$USER/slurm.column.%j.%N.err # STDERR
+#SBATCH -o /home/$USER/slurm.adapt.%j.%N.out # STDOUT
+#SBATCH -e /home/$USER/slurm.adapt.%j.%N.err # STDERR
 ##SBATCH --propagate=STACK
 
 
