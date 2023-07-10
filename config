@@ -1,5 +1,5 @@
 [TRAINING]
-num_train_steps = 20
+num_train_steps = 10
 batch_size = 200
 plot_interval = 1
 save_interval = 50
@@ -11,6 +11,6 @@ boxsize = (2.2, 2.2)
 soft_boundary = 0.03
 
 [EXPERIMENT]
-alpha = 0.0
-beta = 0.0
+alpha = 0.28847
+beta = 0.10569
 weight_decay = 0.0
