@@ -13,6 +13,8 @@ if __name__ == "__main__":
     model = torch.load("model")
     model.eval()
 
+    model.to("cpu")
+
     dataloader, dataset = get_dataloader(config)
 
     # number of spatial samples across mini-batch and sequence length
@@ -38,7 +40,7 @@ if __name__ == "__main__":
     # Now we have positions and the correpsonding recurrent activities for each position
     # We can use this to compute the firing field for some example recurrent cells
 
-    ratemaps = scipy.stats.binned_statistic_2d(*stacked_positions.T, recurrent_activities[:,:16].T, statistic='mean', bins=50)[0]
+    ratemaps = scipy.stats.binned_statistic_2d(*stacked_positions.T, recurrent_activities[:,0:200].T, statistic='mean', bins=50)[0]
     print("ratemaps =", ratemaps.shape)
 
     multiimshow(ratemaps, figsize=(10,10));
