@@ -13,8 +13,9 @@ from torch import _VF
 class AdaptationRNN(torch.nn.RNN):
     def __init__(self, alpha=0.0, beta=0.0, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.beta = alpha
-        self.alpha = beta
+        self.beta = beta
+        self.alpha = alpha
+        # self.gamma = (1 - self.alpha * (1 + self.beta))/(2*(1-self.alpha)) # Backward
 
     def forward(self, input, hx=None):
         batch_sizes = None
@@ -37,10 +38,12 @@ class AdaptationRNN(torch.nn.RNN):
             # apply W and Wh to all batches at once
             z = torch.matmul(W, input[:, i].T).T
             z += torch.matmul(Wh, hidden.T).T
+            #z += self.gamma * z_prev # Backward
             z -= self.beta * v
 
             # Defining v
             v = v + self.alpha * (z_prev - v)
+            #v = v + self.alpha * (z - v) # Backward
 
             # Activation function
             s_z = torch.relu(z)
