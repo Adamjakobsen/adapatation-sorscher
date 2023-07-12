@@ -59,7 +59,7 @@ def get_dataloader(config):
         soft_boundary=config.data.soft_boundary
     )
     agent = ratsimulator.Agent(environment)
-    place_cells = PlaceCells(environment)
+    place_cells = PlaceCells(environment, DoG=True)
 
     # set num_samples essentially infinite, since data is generated on the fly anyway
     dataset = Dataset(
