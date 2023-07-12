@@ -1,6 +1,6 @@
 import torch
 import matplotlib.pyplot as plt
-from SorscherRNN_original import SorscherRNN
+from SorscherRNN_cuda import SorscherRNN
 from tqdm import tqdm
 
 from dataloader import get_dataloader
@@ -13,11 +13,11 @@ if __name__ == "__main__":
     logger = Logger()
     logger.save_config(config)
 
-    model = SorscherRNN()
-    #    alpha=config.experiment.alpha,
-    #    beta=config.experiment.beta,
-    #    weight_decay=config.experiment.weight_decay,
-    #) 
+    model = SorscherRNN(
+        alpha=config.experiment.alpha,
+        beta=config.experiment.beta,
+        weight_decay=config.experiment.weight_decay,
+    ) 
     # move model to GPU if available
     if torch.cuda.is_available():
         model = model.to('cuda')
