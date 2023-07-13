@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
     # Model class must be defined somewhere in this folder
     # I recommend just copying it here from its experiment folder
-    model = torch.load("model")
+    model = torch.load("model", map_location=torch.device('cpu'))
     model.eval()
 
     model.to("cpu")

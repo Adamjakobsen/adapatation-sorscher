@@ -10,7 +10,7 @@ if __name__ == "__main__":
     config.read("config")
 
     # Model class must be defined somewhere
-    model = torch.load("model")
+    model = torch.load("model", map_location=torch.device('cpu'))
     model.eval()
 
     model.to("cpu")
@@ -40,8 +40,8 @@ if __name__ == "__main__":
     # Now we have positions and the correpsonding recurrent activities for each position
     # We can use this to compute the firing field for some example recurrent cells
 
-    ratemaps = scipy.stats.binned_statistic_2d(*stacked_positions.T, recurrent_activities[:,0:200].T, statistic='mean', bins=50)[0]
+    ratemaps = scipy.stats.binned_statistic_2d(*stacked_positions.T, recurrent_activities[:,500:700].T, statistic='mean', bins=50)[0]
     print("ratemaps =", ratemaps.shape)
 
-    multiimshow(ratemaps, figsize=(10,10));
+    multiimshow(ratemaps, figsize=(10,10), normalize=False);
     plt.show()
