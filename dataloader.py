@@ -71,7 +71,7 @@ def get_dataloader(config):
         dataset,
         shuffle=False,
         batch_size=config.training.batch_size,
-        num_workers=0 # choose num_workers based on your system
+        num_workers=8 # choose num_workers based on your system
     )
 
     return dataloader, dataset
