@@ -14,12 +14,6 @@ import ratsimulator
 from PlaceCells import PlaceCells
 
 
-
-
-config.read("config")
-dataloader, dataset = get_dataloader(config)
-
-
 def grid_search(alpha,beta,gpu_id):
     
     #alpha = trial.suggest_uniform('alpha', 0.0, 1.0)
@@ -47,38 +41,31 @@ def grid_search(alpha,beta,gpu_id):
     loss_history = []
     decoding_error = []
     mean_dist_list = []
-    with open(f"./grid_search/grid_search_output_{gpu_id}_{alpha}_{beta}.txt", "w") as f:
-        sys.stdout = f
-        print("Model is on device:", device, file=f)
+    for i, (v, p0, labels, positions) in enumerate(dataloader):
+        #Training
+        model.to(device)
+        v, p0, labels = v.to(device), p0.to(device), labels.to(device)
+        loss = model.train_step(v, p0, labels)
+        loss_history.append(loss)
 
 
-        for i, (v, p0, labels, positions) in enumerate(dataloader):
-            #Training
-            model.to(device)
-            v, p0, labels = v.to(device), p0.to(device), labels.to(device)
-            loss = model.train_step(v, p0, labels)
-            loss_history.append(loss)
-            if i % 100 == 0:
-                print(f"Gpu_id {gpu_id};alpha {alpha};beta {beta} Step {i} loss: {loss}",file=f)
-                f.flush()
-
-            #Decoding error
-            model.eval()
-            #model.to("cpu")
-            output= model.forward(v,p0)
-            #pos_pred= dataset.place_cells.to_euclid(output)
-            #mean_dist = torch.mean(torch.abs(positions[:,1:,:]-pos_pred)).item()
-            #mean_dist_list.append(mean_dist)
+        #Decoding error
+        model.eval()
+        #model.to("cpu")
+        output= model.forward(v,p0)
+        #pos_pred= dataset.place_cells.to_euclid(output)
+        #mean_dist = torch.mean(torch.abs(positions[:,1:,:]-pos_pred)).item()
+        #mean_dist_list.append(mean_dist)
             
-            #or just output/labels?
-            error = torch.mean(torch.abs(output[:,-1:,:]-labels)).item()
+        #or just output/labels?
+        error = torch.mean(torch.abs(output[:,-1:,:]-labels)).item()
             
-            decoding_error.append(error)
+        decoding_error.append(error)
 
 
 
-            if i > num_train_steps:
-                break
+        if i > num_train_steps:
+            break
     
 
     
@@ -91,21 +78,23 @@ def grid_search(alpha,beta,gpu_id):
     np.save(f"./grid_search/decoding_error_{alpha}_{beta}.npy", decoding_error)
     #np.save(f"./grid_search/mean_dist_{alpha}_{beta}.npy", mean_dist_list)
     torch.cuda.empty_cache()
-    sys.stdout = sys.__stdout__
 
 if __name__=="__main__":
+    config.read("config")
+    dataloader, dataset = get_dataloader(config)    
+
     alpha_list=np.array([0.001,0.01,0.1,0.5])
     beta_list=np.array([0.001,0.01,0.1,0.5])
     num_gpus = torch.cuda.device_count()
 
     # Exclude GPU 0
-    available_gpus = list(range(1, num_gpus))
+    available_gpus = list(range(0, num_gpus))
 
     # Create a grid of all combinations of hyperparameters
     param_grid = [(alpha, beta) for alpha in alpha_list for beta in beta_list]
 
     # Number of processes per GPU
-    num_processes_per_gpu = 3
+    num_processes_per_gpu = 2
 
     # Total number of processes
     num_processes = len(available_gpus) * num_processes_per_gpu
