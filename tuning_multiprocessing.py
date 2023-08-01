@@ -94,7 +94,7 @@ if __name__=="__main__":
     param_grid = [(alpha, beta) for alpha in alpha_list for beta in beta_list]
 
     # Number of processes per GPU
-    num_processes_per_gpu = 2
+    num_processes_per_gpu = 8
 
     # Total number of processes
     num_processes = len(available_gpus) * num_processes_per_gpu
