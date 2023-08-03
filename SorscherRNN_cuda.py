@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 import torch
 from torch import Tensor
@@ -34,6 +35,13 @@ class AdaptationRNN(torch.nn.RNN):
         v = torch.zeros_like(hidden)
         z_prev = torch.zeros_like(hidden) # This is just temp :)
 
+        # Plotting 
+        np.random.seed(0)
+        indexes = np.random.randint(0, 4096, (3))
+
+        """z_history = [z_prev[0,indexes]]
+        v_history = [v[0,indexes]]"""
+
         for i in range(time_steps):
             # apply W and Wh to all batches at once
             z = torch.matmul(W, input[:, i].T).T
@@ -43,7 +51,11 @@ class AdaptationRNN(torch.nn.RNN):
 
             # Defining v
             v = v + self.alpha * (z_prev - v)
+            # v = torch.relu(v) #???? 
+
             #v = v + self.alpha * (z - v) # Backward
+            """z_history.append(z[0, indexes])
+            v_history.append(v[0, indexes])"""
 
             # Activation function
             s_z = torch.relu(z)
@@ -53,6 +65,12 @@ class AdaptationRNN(torch.nn.RNN):
             result.append(s_z.unsqueeze(1))
             hidden = s_z
             z_prev = z
+
+        """plt.figure()
+        plt.plot(v_history, label="v_history_min")
+        plt.plot(v_history_max, label="v_history_max")
+        plt.legend()
+        plt.show()"""
 
         # Concatenating the timesteps
         output = torch.cat(result, dim=1)
@@ -66,13 +84,14 @@ class SorscherRNN(torch.nn.Module):
     https://github.com/ganguli-lab/grid-pattern-formation/blob/master/model.py
     """
 
-    def __init__(self, alpha=0.0, beta=0.0, weight_decay=0.0, Ng=4096, Np=512, **kwargs):
+    def __init__(self, alpha=0.0, beta=0.0, weight_decay=0.0, energy_reg=0.0, Ng=4096, Np=512, **kwargs):
         super(SorscherRNN, self).__init__(**kwargs)
         self.Ng, self.Np = Ng, Np
         #Set torch seed
         torch.manual_seed(0)
 
         self.weight_decay = weight_decay
+        self.energy_reg = energy_reg
 
         # define network architecture
         self.init_position_encoder = torch.nn.Linear(Np, Ng, bias=False)
@@ -94,6 +113,8 @@ class SorscherRNN(torch.nn.Module):
             torch.nn.init.xavier_uniform_(param.data, gain=1.0)
 
         self.optimizer = torch.optim.Adam(self.parameters(), lr=1e-4)
+
+        self.gs = None
 
     @property
     def device(self):
@@ -138,6 +159,7 @@ class SorscherRNN(torch.nn.Module):
 
     def forward(self, v, p0, log_softmax=False):
         gs = self.g(v, p0)
+        self.gs = gs
         return self.p(gs, log_softmax)
 
     def loss_fn(self, log_predictions, labels):
@@ -153,7 +175,8 @@ class SorscherRNN(torch.nn.Module):
             labels = labels.to(self.device, dtype=self.dtype)
         CE = torch.mean(-torch.sum(labels * log_predictions, axis=-1))
         l2_reg = torch.sum(self.RNN.weight_hh_l0**2)
-        return CE + self.weight_decay*l2_reg 
+        l2_reg_energy = torch.sum(self.gs**2)
+        return CE + self.weight_decay*l2_reg + self.energy_reg * l2_reg_energy
 
     def train_step(self, v, p0, labels):
         self.optimizer.zero_grad()
