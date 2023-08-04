@@ -17,7 +17,8 @@ if __name__ == "__main__":
         alpha=config.experiment.alpha,
         beta=config.experiment.beta,
         weight_decay=config.experiment.weight_decay,
-        energy_reg=config.experiment.energy_reg
+        energy_reg=config.experiment.energy_reg, 
+        non_negativity = config.experiment.non_negativity
     ) 
     # move model to GPU if available
     if torch.cuda.is_available():
