@@ -12,11 +12,14 @@ from torch import _VF
 
 
 class AdaptationRNN(torch.nn.RNN):
-    def __init__(self, alpha=0.0, beta=0.0, *args, **kwargs):
+    def __init__(self, alpha=0.0, beta=0.0, non_negativity=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.beta = beta
         self.alpha = alpha
+        self.non_negativity = non_negativity
         # self.gamma = (1 - self.alpha * (1 + self.beta))/(2*(1-self.alpha)) # Backward
+
+        self.silenced_neurons = None
 
     def forward(self, input, hx=None):
         batch_sizes = None
@@ -36,11 +39,11 @@ class AdaptationRNN(torch.nn.RNN):
         z_prev = torch.zeros_like(hidden) # This is just temp :)
 
         # Plotting 
-        np.random.seed(0)
-        indexes = np.random.randint(0, 4096, (3))
+        """np.random.seed(0)
+        indexes = np.random.randint(0, 4096, (10))
 
-        """z_history = [z_prev[0,indexes]]
-        v_history = [v[0,indexes]]"""
+        z_history = [z_prev[0,indexes].detach().numpy()]
+        v_history = [v[0,indexes].detach().numpy()]"""
 
         for i in range(time_steps):
             # apply W and Wh to all batches at once
@@ -51,14 +54,19 @@ class AdaptationRNN(torch.nn.RNN):
 
             # Defining v
             v = v + self.alpha * (z_prev - v)
-            # v = torch.relu(v) #???? 
+            if self.non_negativity:
+                v = torch.relu(v)  
 
             #v = v + self.alpha * (z - v) # Backward
-            """z_history.append(z[0, indexes])
-            v_history.append(v[0, indexes])"""
+
+            """z_history.append(z[0, indexes].detach().numpy())
+            v_history.append(v[0, indexes].detach().numpy())"""
 
             # Activation function
             s_z = torch.relu(z)
+
+            """if self.silenced_neurons is not None:
+                s_z[:, self.silenced_neurons] = 0.0"""
 
             # s_z is now [200, 4096], unsqueeze(1) gives us [200, 1, 4096]
             # so that we can concatenate the timesteps later
@@ -67,10 +75,11 @@ class AdaptationRNN(torch.nn.RNN):
             z_prev = z
 
         """plt.figure()
-        plt.plot(v_history, label="v_history_min")
-        plt.plot(v_history_max, label="v_history_max")
-        plt.legend()
-        plt.show()"""
+        for i in range(10):
+            plt.subplot(5,2,i+1)
+            plt.plot(np.array(z_history).T[i], label="z_"+str(i))
+            plt.plot(np.array(v_history).T[i], label="v_"+str(i))"""
+        #plt.show()
 
         # Concatenating the timesteps
         output = torch.cat(result, dim=1)
@@ -84,11 +93,11 @@ class SorscherRNN(torch.nn.Module):
     https://github.com/ganguli-lab/grid-pattern-formation/blob/master/model.py
     """
 
-    def __init__(self, alpha=0.0, beta=0.0, weight_decay=0.0, energy_reg=0.0, Ng=4096, Np=512, **kwargs):
+    def __init__(self, alpha=0.0, beta=0.0, weight_decay=0.0, energy_reg=0.0, non_negativity=False, Ng=4096, Np=512, **kwargs):
         super(SorscherRNN, self).__init__(**kwargs)
         self.Ng, self.Np = Ng, Np
         #Set torch seed
-        torch.manual_seed(0)
+        #torch.manual_seed(0)
 
         self.weight_decay = weight_decay
         self.energy_reg = energy_reg
@@ -98,6 +107,7 @@ class SorscherRNN(torch.nn.Module):
         self.RNN = AdaptationRNN(
             alpha=alpha,
             beta=beta,
+            non_negativity=non_negativity, 
             input_size=2,
             hidden_size=Ng,
             num_layers=1,
