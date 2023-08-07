@@ -36,14 +36,14 @@ class AdaptationRNN(torch.nn.RNN):
 
         # Defining v 
         v = torch.zeros_like(hidden)
-        z_prev = torch.zeros_like(hidden) # This is just temp :)
+        #z_prev = torch.zeros_like(hidden) # This is just temp :)
 
         # Plotting 
         """np.random.seed(0)
         indexes = np.random.randint(0, 4096, (10))
 
-        z_history = [z_prev[0,indexes].detach().numpy()]
-        v_history = [v[0,indexes].detach().numpy()]"""
+        z_history = []
+        v_history = []"""
 
         for i in range(time_steps):
             # apply W and Wh to all batches at once
@@ -53,9 +53,10 @@ class AdaptationRNN(torch.nn.RNN):
             z -= self.beta * v
 
             # Defining v
-            v = v + self.alpha * (z_prev - v)
+            #v = v + self.alpha * (z_prev - v) 
+            v = v + self.alpha * (z - v) # Moving away from original equation, in order to have z affected by previous v
             if self.non_negativity:
-                v = torch.relu(v)  
+                v = torch.relu(v)
 
             #v = v + self.alpha * (z - v) # Backward
 
@@ -72,7 +73,7 @@ class AdaptationRNN(torch.nn.RNN):
             # so that we can concatenate the timesteps later
             result.append(s_z.unsqueeze(1))
             hidden = s_z
-            z_prev = z
+            #z_prev = z
 
         """plt.figure()
         for i in range(10):
