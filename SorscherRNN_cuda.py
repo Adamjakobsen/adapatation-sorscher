@@ -36,11 +36,10 @@ class AdaptationRNN(torch.nn.RNN):
 
         # Defining v 
         v = torch.zeros_like(hidden)
-        #z_prev = torch.zeros_like(hidden) # This is just temp :)
+        z_prev = torch.zeros_like(hidden) # This is just temp :)
 
         # Plotting 
-        """np.random.seed(0)
-        indexes = np.random.randint(0, 4096, (10))
+        """indexes = np.random.randint(0, 4096, (10))
 
         z_history = []
         v_history = []"""
@@ -53,8 +52,8 @@ class AdaptationRNN(torch.nn.RNN):
             z -= self.beta * v
 
             # Defining v
-            #v = v + self.alpha * (z_prev - v) 
-            v = v + self.alpha * (z - v) # Moving away from original equation, in order to have z affected by previous v
+            v = v + self.alpha * (z_prev - v) 
+            #v = v + self.alpha * (z - v) # Moving away from original equation, in order to have z affected by previous v
             if self.non_negativity:
                 v = torch.relu(v)
 
@@ -73,14 +72,13 @@ class AdaptationRNN(torch.nn.RNN):
             # so that we can concatenate the timesteps later
             result.append(s_z.unsqueeze(1))
             hidden = s_z
-            #z_prev = z
+            z_prev = z
 
         """plt.figure()
         for i in range(10):
             plt.subplot(5,2,i+1)
             plt.plot(np.array(z_history).T[i], label="z_"+str(i))
             plt.plot(np.array(v_history).T[i], label="v_"+str(i))"""
-        #plt.show()
 
         # Concatenating the timesteps
         output = torch.cat(result, dim=1)
@@ -168,7 +166,7 @@ class SorscherRNN(torch.nn.Module):
             else place_preds
         )
 
-    def forward(self, v, p0, log_softmax=False):
+    def forward(self, v, p0, log_softmax=True):
         gs = self.g(v, p0)
         self.gs = gs
         return self.p(gs, log_softmax)
