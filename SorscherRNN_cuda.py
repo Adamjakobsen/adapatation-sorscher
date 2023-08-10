@@ -170,6 +170,12 @@ class SorscherRNN(torch.nn.Module):
         gs = self.g(v, p0)
         self.gs = gs
         return self.p(gs, log_softmax)
+    
+    def get_l2_reg(self):
+        return torch.sum(self.RNN.weight_hh_l0**2)
+    
+    def get_l2_reg_energy(self):
+        return torch.sum(self.gs**2)
 
     def loss_fn(self, log_predictions, labels):
         """
@@ -183,8 +189,8 @@ class SorscherRNN(torch.nn.Module):
         if labels.device != self.device:
             labels = labels.to(self.device, dtype=self.dtype)
         CE = torch.mean(-torch.sum(labels * log_predictions, axis=-1))
-        l2_reg = torch.sum(self.RNN.weight_hh_l0**2)
-        l2_reg_energy = torch.sum(self.gs**2)
+        l2_reg = self.get_l2_reg() #torch.sum(self.RNN.weight_hh_l0**2)
+        l2_reg_energy = self.get_l2_reg_energy() #torch.sum(self.gs**2)
         return CE + self.weight_decay*l2_reg + self.energy_reg * l2_reg_energy
 
     def train_step(self, v, p0, labels):

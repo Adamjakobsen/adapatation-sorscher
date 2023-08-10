@@ -1,8 +1,31 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import torch
 
+def load_from_file(filename):
+    # Model class must be defined somewhere in this folder
+    # I recommend just copying it here from its experiment folder
+    model = torch.load(filename, map_location=torch.device('cpu'))
+    model.eval()
 
-def multiimshow(zz, figsize=(1,1), normalize=True, add_colorbar=True, **kwargs):
+    model.to("cpu")
+
+    model.RNN.silenced_neurons = None
+    try:
+        model.RNN.non_negativity = model.RNN.non_negativity
+    except:
+        model.RNN.non_negativity = False
+
+    return model
+
+def decoding_error(outputs, positions, dataset):
+    output_euclid = dataset.place_cells.to_euclid(outputs[:,:,:], k=3)
+    difference = positions[:,1:,:] - output_euclid
+    diff_abs = torch.abs(difference)
+    mean_dist = torch.mean(diff_abs).item()
+    return mean_dist
+
+def multiimshow(zz, figsize=(1,1), normalize=False, add_colorbar=True, **kwargs):
     """
     Parameters:
         zz (np.ndarray): A 3D array of shape (nimages, res, res) representing the images to plot.

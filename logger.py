@@ -1,18 +1,21 @@
 import torch
 import os
 import time
+import json
 
 class Logger:
-    def __init__(self):
-        path = self.get_path()
+    def __init__(self, sub_folder=None):
+        path = self.get_path(sub_folder)
         self.path = path
-        self.make_experiment_folder(path)
+        self.make_experiment_folder(path, sub_folder)
 
     def save_config(self, config) -> None:
         config.save(self.path + "/config")
 
-    def get_path(self) -> str:
+    def get_path(self, sub_folder: str = None) -> str:
         path = "./experiments"
+        if sub_folder is not None:
+            path += "/" + sub_folder
 
         # Make a unique experiment folder name by the time and date
         name = f"/{time.localtime().tm_mday}-{time.localtime().tm_mon}-"+str(time.localtime().tm_year)[-2:]
@@ -23,9 +26,12 @@ class Logger:
 
         return path
 
-    def make_experiment_folder(self, path: str) -> None:
+    def make_experiment_folder(self, path: str, sub_folder: str = None) -> None:
         if not os.path.isdir("./experiments"):
             os.mkdir("./experiments")
+        if sub_folder is not None:
+            if not os.path.isdir("./experiments" + "/" + sub_folder):
+                os.mkdir("./experiments" + "/" + sub_folder)
 
         additive = 2
         new_path = path
@@ -40,3 +46,7 @@ class Logger:
 
     def save_model(self, model) -> None:
         torch.save(model, self.path + "/model")
+
+    def save_list(self, liste, name) -> None:
+        with open(self.path + "/" + name, 'w') as f:
+            json.dump(liste, f)
