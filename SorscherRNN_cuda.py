@@ -39,10 +39,12 @@ class AdaptationRNN(torch.nn.RNN):
         z_prev = torch.zeros_like(hidden) # This is just temp :)
 
         # Plotting 
-        """indexes = np.random.randint(0, 4096, (10))
+        indexes = np.random.randint(0, 4096, (10))
 
         z_history = []
-        v_history = []"""
+        v_history = []
+
+        mean_activity = []
 
         for i in range(time_steps):
             # apply W and Wh to all batches at once
@@ -59,14 +61,16 @@ class AdaptationRNN(torch.nn.RNN):
 
             #v = v + self.alpha * (z - v) # Backward
 
-            """z_history.append(z[0, indexes].detach().numpy())
-            v_history.append(v[0, indexes].detach().numpy())"""
+            z_history.append(z[0, indexes].detach().numpy())
+            v_history.append(v[0, indexes].detach().numpy())
 
             # Activation function
             s_z = torch.relu(z)
 
-            """if self.silenced_neurons is not None:
-                s_z[:, self.silenced_neurons] = 0.0"""
+            mean_activity.append(torch.mean(s_z[:, :]).detach().numpy())
+
+            if self.silenced_neurons is not None:
+                s_z[:, self.silenced_neurons] = 0.0
 
             # s_z is now [200, 4096], unsqueeze(1) gives us [200, 1, 4096]
             # so that we can concatenate the timesteps later
@@ -78,7 +82,17 @@ class AdaptationRNN(torch.nn.RNN):
         for i in range(10):
             plt.subplot(5,2,i+1)
             plt.plot(np.array(z_history).T[i], label="z_"+str(i))
-            plt.plot(np.array(v_history).T[i], label="v_"+str(i))"""
+            plt.plot(np.array(v_history).T[i], label="v_"+str(i))
+        plt.figure()
+        plt.plot(mean_activity)"""
+
+        """history = {
+            "z": z_history,
+            "v": v_history
+        }
+        import pickle 
+        with open("adapt_a5b9_history", 'wb') as f:
+            pickle.dump(history, f)"""
 
         # Concatenating the timesteps
         output = torch.cat(result, dim=1)
