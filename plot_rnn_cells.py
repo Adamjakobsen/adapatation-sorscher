@@ -5,15 +5,23 @@ from utils import multiimshow
 import scipy
 from dataloader import get_dataloader
 
+from IPython import embed
+
 if __name__ == "__main__":
     from localconfig import config
     config.read("config")
 
     # Model class must be defined somewhere
-    model = torch.load("model", map_location=torch.device('cpu'))
+    model = torch.load("experiments/adapt_a5b9/12-8-23_14:37/model", map_location=torch.device('cpu'))
     model.eval()
 
     model.to("cpu")
+
+    model.RNN.silenced_neurons = None
+    try:
+        model.RNN.non_negativity = model.RNN.non_negativity
+    except:
+        model.RNN.non_negativity = False
 
     dataloader, dataset = get_dataloader(config)
 
@@ -40,8 +48,8 @@ if __name__ == "__main__":
     # Now we have positions and the correpsonding recurrent activities for each position
     # We can use this to compute the firing field for some example recurrent cells
 
-    ratemaps = scipy.stats.binned_statistic_2d(*stacked_positions.T, recurrent_activities[:,500:700].T, statistic='mean', bins=50)[0]
+    ratemaps = scipy.stats.binned_statistic_2d(*stacked_positions.T, recurrent_activities[:,:256].T, statistic='mean', bins=50)[0]
     print("ratemaps =", ratemaps.shape)
 
-    multiimshow(ratemaps, figsize=(10,10), normalize=False);
+    multiimshow(ratemaps, figsize=(10,10), normalize=True);
     plt.show()
