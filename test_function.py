@@ -5,29 +5,29 @@ from utils import multiimshow
 import scipy
 from dataloader import get_dataloader
 
+from utils import decoding_error, load_from_file
+
 if __name__ == "__main__":
     from localconfig import config
     config.read("config")
 
-    # Model class must be defined somewhere in this folder
-    # I recommend just copying it here from its experiment folder
-    model = torch.load("model", map_location=torch.device('cpu'))
-    model.eval()
-
-    model.to("cpu")
+    model = load_from_file("experiments/adapt_a5b9/12-8-23_14:37/model")
 
     # Getting the test data
     dataloader, dataset = get_dataloader(config)
     velocities, init_pc_positions, labels, positions = dataset[0]
+    W, Wh = model.RNN._flat_weights
+    print(torch.mean(torch.abs(W)))
 
     # Getting the model predictions
-    output = model.forward(velocities, init_pc_positions)
+    output = model.forward(velocities, init_pc_positions, log_softmax=True)
     output_euclid = dataset.place_cells.to_euclid(output[0,:,:])
 
     # Getting the loss 
-    mean_dist = np.round(torch.mean(torch.sum(torch.abs(positions[1:] - output_euclid), axis=-1)).item(), 5)
+    mean_dist = round(decoding_error(output[None], positions[None], dataset), 4)
 
-    plt.title("Performance on path integration\nMean distance: " + str(mean_dist))
+    plt.figure()
+    plt.title("Performance on path integration\nDecoding error: " + str(mean_dist))
     # Plotting the euclidean positions
     plt.plot(*positions.T, label="True")
     plt.plot(*output_euclid.T, linestyle="dashed", label="Agent")
@@ -40,6 +40,7 @@ if __name__ == "__main__":
     plt.xticks(np.linspace(0,2.2,10))
     plt.yticks(np.linspace(0,2.2,10))
     plt.legend()
+
     plt.show()
 
     
