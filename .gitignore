@@ -9,3 +9,13 @@ model
 experiments
 experiments/*
 
+plots
+plots/*
+
+models
+model/*
+
+# This entire folder was massacred in the rush for the deadline. Now I don't know what's important
+junk
+junk/*
+

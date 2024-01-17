@@ -32,18 +32,13 @@ def evaluate(pair, data) -> float:
 
     num_train_steps = config.training.num_train_steps
 
-    print("Starting training alpha", alpha, "and beta", beta)
-
     for i, (v, p0, labels, _) in enumerate(data):
         loss = model.train_step(v, p0, labels)
-        print(alpha)
 
         if i % config.training.plot_interval == 0:
             loss_history.append(loss)
         if i > num_train_steps:
             break
-
-    print("Ending training alpha", alpha, "and beta", beta)
 
     # The handling of saving loss figure should be moved to logger
     plt.xlabel("Time step")
@@ -73,7 +68,7 @@ if __name__ == "__main__":
         if i > num_train_steps:
             break
     
-    pool = multiprocessing.Pool(12)
+    pool = multiprocessing.Pool(1)
     import time 
     start_time = time.time()
     jobs = [pool.apply_async(evaluate, args=(pair,data)) for pair in alpha_beta_pairs]
