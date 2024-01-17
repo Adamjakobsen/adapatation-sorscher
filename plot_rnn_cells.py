@@ -1,18 +1,19 @@
-import torch
 import matplotlib.pyplot as plt
 import numpy as np
-from utils import multiimshow
 import scipy
-from dataloader import get_dataloader
-
+import torch
 from IPython import embed
+
+from src.dataloader import get_dataloader
+from utils import multiimshow
 
 if __name__ == "__main__":
     from localconfig import config
+
     config.read("config")
 
     # Model class must be defined somewhere
-    model = torch.load("experiments/adapt_a5b9/12-8-23_14:37/model", map_location=torch.device('cpu'))
+    model = torch.load("experiments/adapt_a5b9/12-8-23_14:37/model", map_location=torch.device("cpu"))
     model.eval()
 
     model.to("cpu")
@@ -31,8 +32,8 @@ if __name__ == "__main__":
     stacked_positions = []
     for i, (v, p0, _, positions) in enumerate(dataloader):
         recurrent_activities.append(model.g(v, p0).cpu().detach().numpy())
-        stacked_positions.append(positions[:,1:].cpu().detach().numpy())
-        if i*dataloader.batch_size*dataset.seq_len > nsamples:
+        stacked_positions.append(positions[:, 1:].cpu().detach().numpy())
+        if i * dataloader.batch_size * dataset.seq_len > nsamples:
             break
     # stack runs in mini-batch dimension
     recurrent_activities = np.concatenate(recurrent_activities, axis=0)
@@ -48,8 +49,10 @@ if __name__ == "__main__":
     # Now we have positions and the correpsonding recurrent activities for each position
     # We can use this to compute the firing field for some example recurrent cells
 
-    ratemaps = scipy.stats.binned_statistic_2d(*stacked_positions.T, recurrent_activities[:,:256].T, statistic='mean', bins=50)[0]
+    ratemaps = scipy.stats.binned_statistic_2d(
+        *stacked_positions.T, recurrent_activities[:, :256].T, statistic="mean", bins=50
+    )[0]
     print("ratemaps =", ratemaps.shape)
 
-    multiimshow(ratemaps, figsize=(10,10), normalize=True);
+    multiimshow(ratemaps, figsize=(10, 10), normalize=True)
     plt.show()

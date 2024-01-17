@@ -1,7 +1,9 @@
-import torch
 from typing import Tuple
+
 import ratsimulator
-from PlaceCells import PlaceCells
+import torch
+
+from src.PlaceCells import PlaceCells
 
 
 class Dataset(torch.utils.data.Dataset):
@@ -29,9 +31,7 @@ class Dataset(torch.utils.data.Dataset):
         """
         return self.num_samples
 
-    def __getitem__(
-        self, index: int = None
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    def __getitem__(self, index: int = None) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Get a sample from the dataset.
 
@@ -53,25 +53,21 @@ class Dataset(torch.utils.data.Dataset):
         init_pc_positions, labels = pc_positions[0], pc_positions[1:]
         return velocities, init_pc_positions, labels, positions
 
+
 def get_dataloader(config):
     environment = ratsimulator.Environment.Rectangle(
-        boxsize=eval(config.data.boxsize),
-        soft_boundary=config.data.soft_boundary
+        boxsize=eval(config.data.boxsize), soft_boundary=config.data.soft_boundary
     )
     agent = ratsimulator.Agent(environment)
     place_cells = PlaceCells(environment, DoG=True)
 
     # set num_samples essentially infinite, since data is generated on the fly anyway
-    dataset = Dataset(
-        agent, place_cells,
-        num_samples=1000000000,
-        seq_len=config.data.seq_len
-    )
+    dataset = Dataset(agent, place_cells, num_samples=1000000000, seq_len=config.data.seq_len)
     dataloader = torch.utils.data.DataLoader(
         dataset,
         shuffle=False,
         batch_size=config.training.batch_size,
-        num_workers=8 # choose num_workers based on your system
+        num_workers=8,  # choose num_workers based on your system
     )
 
     return dataloader, dataset

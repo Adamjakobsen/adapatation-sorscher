@@ -1,16 +1,19 @@
-import torch
-import matplotlib.pyplot as plt
-from SorscherRNN_cuda import SorscherRNN
-from tqdm import tqdm
-import multiprocessing
 import copy
+import multiprocessing
 
-from dataloader import get_dataloader
-from logger import Logger
+import matplotlib.pyplot as plt
+import torch
+from tqdm import tqdm
+
+from src.dataloader import get_dataloader
+from src.logger import Logger
+from src.SorscherRNN_cuda import SorscherRNN
+
 
 def evaluate(pair, data) -> float:
     alpha, beta = pair
     from localconfig import config
+
     config.read("config")
 
     config.experiment.alpha = alpha
@@ -28,7 +31,7 @@ def evaluate(pair, data) -> float:
     model = model.to("cpu")
     print("Ending defining alpha", alpha, "and beta", beta)
 
-    loss_history = [] # we'll use this to plot the loss over time
+    loss_history = []  # we'll use this to plot the loss over time
 
     num_train_steps = config.training.num_train_steps
 
@@ -49,13 +52,15 @@ def evaluate(pair, data) -> float:
     # You'll need to save all the losses
     return loss_history[-1]
 
+
 if __name__ == "__main__":
-    alpha_beta_pairs = [(0, 0), (1,1), (0, 0), (1,1), (0, 0), (1,1), (0, 0), (1,1), (0, 0), (1,1), (0, 0), (1,1)]
+    alpha_beta_pairs = [(0, 0), (1, 1), (0, 0), (1, 1), (0, 0), (1, 1), (0, 0), (1, 1), (0, 0), (1, 1), (0, 0), (1, 1)]
 
     from localconfig import config
+
     config.read("config")
 
-    #Set torch seed
+    # Set torch seed
     torch.manual_seed(0)
     dataloader, _ = get_dataloader(config)
 
@@ -67,11 +72,12 @@ if __name__ == "__main__":
 
         if i > num_train_steps:
             break
-    
+
     pool = multiprocessing.Pool(1)
-    import time 
+    import time
+
     start_time = time.time()
-    jobs = [pool.apply_async(evaluate, args=(pair,data)) for pair in alpha_beta_pairs]
+    jobs = [pool.apply_async(evaluate, args=(pair, data)) for pair in alpha_beta_pairs]
     losses = [job.get() for job in jobs]
     end_time = time.time()
     print("It took", end_time - start_time)

@@ -1,13 +1,15 @@
-import torch
-import matplotlib.pyplot as plt
-from SorscherRNN_cuda import SorscherRNN
-from tqdm import tqdm
-import numpy as np
 import argparse
 
-from dataloader import get_dataloader
-from logger import Logger
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+from tqdm import tqdm
+
+from src.dataloader import get_dataloader
+from src.logger import Logger
+from src.SorscherRNN_cuda import SorscherRNN
 from utils import decoding_error
+
 
 def run(config, sub_folder=None):
     logger = Logger(sub_folder=sub_folder)
@@ -17,20 +19,20 @@ def run(config, sub_folder=None):
         alpha=config.experiment.alpha,
         beta=config.experiment.beta,
         weight_decay=config.experiment.weight_decay,
-        energy_reg=config.experiment.energy_reg, 
-        non_negativity = config.experiment.non_negativity
-    ) 
+        energy_reg=config.experiment.energy_reg,
+        non_negativity=config.experiment.non_negativity,
+    )
     # move model to GPU if available
     if torch.cuda.is_available():
-        model = model.to('cuda')
+        model = model.to("cuda")
     elif torch.backends.mps.is_available() and torch.backends.mps.is_built():
         # MacOS M1 chips have a specific torch speedup:
         # https://towardsdatascience.com/installing-pytorch-on-apple-m1-chip-with-gpu-acceleration-3351dc44d67c
-        model = model.to('mps')
+        model = model.to("mps")
 
     dataloader, dataset = get_dataloader(config)
 
-    loss_history = [] # we'll use this to plot the loss over time
+    loss_history = []  # we'll use this to plot the loss over time
     decoding_error_history = []
     l2_reg_history = []
     l2_reg_energy_history = []
@@ -42,10 +44,10 @@ def run(config, sub_folder=None):
         progress_bar = enumerate(dataloader)
     else:
         progress_bar = tqdm(enumerate(dataloader), total=num_train_steps)
-    
+
     for i, (v, p0, labels, positions) in progress_bar:
         loss = model.train_step(v, p0, labels)
-        
+
         # Plotting and visualization
         if i % config.training.plot_interval == 0:
             if not config.training.on_cluster:
@@ -62,7 +64,7 @@ def run(config, sub_folder=None):
             dec_err = decoding_error(outputs, positions, dataset)
             decoding_error_history.append(dec_err)
 
-            # Get l2 regs 
+            # Get l2 regs
             l2_reg = model.get_l2_reg().cpu().detach().numpy().tolist()
             l2_reg_history.append(l2_reg)
 
@@ -86,40 +88,50 @@ def run(config, sub_folder=None):
     plt.xlabel("Training steps")
     plt.ylabel("Loss")
     plt.plot(loss_history)
-    plt.xticks(np.arange(len(loss_history)), np.arange(0,len(loss_history)*config.training.plot_interval, config.training.plot_interval)) 
+    plt.xticks(
+        np.arange(len(loss_history)),
+        np.arange(0, len(loss_history) * config.training.plot_interval, config.training.plot_interval),
+    )
     plt.savefig(logger.path + "/loss_figure")
 
     plt.figure()
     plt.xlabel("Training steps")
     plt.ylabel("Decoding error")
     plt.plot(decoding_error_history)
-    plt.xticks(np.arange(len(loss_history)), np.arange(0,len(loss_history)*config.training.plot_interval, config.training.plot_interval))
+    plt.xticks(
+        np.arange(len(loss_history)),
+        np.arange(0, len(loss_history) * config.training.plot_interval, config.training.plot_interval),
+    )
     plt.savefig(logger.path + "/decoding_error")
 
     plt.figure()
     plt.xlabel("Training steps")
     plt.ylabel("Weight squared sum")
     plt.plot(l2_reg_history)
-    plt.xticks(np.arange(len(loss_history)), np.arange(0,len(loss_history)*config.training.plot_interval, config.training.plot_interval))
+    plt.xticks(
+        np.arange(len(loss_history)),
+        np.arange(0, len(loss_history) * config.training.plot_interval, config.training.plot_interval),
+    )
     plt.savefig(logger.path + "/weight_reg")
 
     plt.figure()
     plt.xlabel("Training steps")
     plt.ylabel("Energy squared sum")
     plt.plot(l2_reg_energy_history)
-    plt.xticks(np.arange(len(loss_history)), np.arange(0,len(loss_history)*config.training.plot_interval, config.training.plot_interval))
+    plt.xticks(
+        np.arange(len(loss_history)),
+        np.arange(0, len(loss_history) * config.training.plot_interval, config.training.plot_interval),
+    )
     plt.savefig(logger.path + "/energy_reg")
+
 
 if __name__ == "__main__":
     from localconfig import config
+
     config.read("config")
 
-    parser = argparse.ArgumentParser(
-                    prog='Main',
-                    description='Main runs one run with the current config')
-    parser.add_argument('-f', '--folder', default=None)
+    parser = argparse.ArgumentParser(prog="Main", description="Main runs one run with the current config")
+    parser.add_argument("-f", "--folder", default=None)
     args = parser.parse_args()
 
     run(config, sub_folder=args.folder)
-
-    

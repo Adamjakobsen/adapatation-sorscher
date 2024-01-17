@@ -1,19 +1,23 @@
-import torch
-import matplotlib.pyplot as plt
-from SorscherRNN_cuda import SorscherRNN
-from tqdm import tqdm
-import multiprocessing
 import copy
+import multiprocessing
 
-from dataloader import get_dataloader
-from logger import Logger
+import matplotlib.pyplot as plt
 import optuna
+import torch
+from tqdm import tqdm
+
+from src.dataloader import get_dataloader
+from src.logger import Logger
+from src.SorscherRNN_cuda import SorscherRNN
+
+
 # The objective function that Optuna will optimize
 def objective(trial):
     from localconfig import config
+
     config.read("config")
-    alpha = trial.suggest_uniform('alpha', 0.0, 1.0)
-    beta = trial.suggest_uniform('beta', 0.0, 1.0)
+    alpha = trial.suggest_uniform("alpha", 0.0, 1.0)
+    beta = trial.suggest_uniform("beta", 0.0, 1.0)
     print("alpha:", alpha, "beta:", beta)
     weight_decay = config.experiment.weight_decay
     logger = Logger()
@@ -26,7 +30,7 @@ def objective(trial):
     )
 
     gpu_id = torch.cuda.current_device()
-    device = torch.device(f'cuda:{gpu_id}')
+    device = torch.device(f"cuda:{gpu_id}")
     model.to(device)
     print("Model is on device:", device)
 
@@ -41,19 +45,19 @@ def objective(trial):
         loss_history.append(loss)
         if i > num_train_steps:
             break
-    
-    #Average loss over the last 100 steps
+
+    # Average loss over the last 100 steps
     average_loss = sum(loss_history[-100:]) / 100
-    
 
     trial.set_user_attr("loss_history", loss_history)
 
     return average_loss
 
+
 # Setup Optuna study
-study_name = 'SorscherRNN_study'
-study_storage = 'sqlite:///tuning_alpha_beta.db'
-study = optuna.create_study(study_name=study_name, storage=study_storage, direction='minimize', load_if_exists=True)
+study_name = "SorscherRNN_study"
+study_storage = "sqlite:///tuning_alpha_beta.db"
+study = optuna.create_study(study_name=study_name, storage=study_storage, direction="minimize", load_if_exists=True)
 
 # Optimize the objective function
 study.optimize(objective, n_trials=100)
