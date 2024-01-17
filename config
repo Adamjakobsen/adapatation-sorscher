@@ -1,9 +1,9 @@
 [TRAINING]
-num_train_steps = 100000
+num_train_steps = 4000
 batch_size = 200
-plot_interval = 100
-save_interval = 2500
-on_cluster = True
+plot_interval = 5
+save_interval = 100
+on_cluster = False
 
 [DATA]
 seq_len = 20
@@ -13,7 +13,9 @@ soft_boundary = 0.03
 [EXPERIMENT]
 #alpha = 0.0
 #beta = 0.0
-alpha = 0.10569
-beta = 0.28847
-weight_decay = 0.0
-#weight_decay = 0.0001
+alpha = 0.9
+beta = 0.9
+weight_decay = 0.0001
+#energy_reg = 0.0001
+#energy_reg = 0.0
+non_negativity = True
